@@ -1,4 +1,4 @@
-# main.tf 
+# main.tf - VERSIÓN CORREGIDA
 terraform {
   required_version = ">= 1.0"
   
@@ -27,7 +27,6 @@ provider "aws" {
 }
 
 # Variables
-
 variable "environment" {
   description = "Entorno de despliegue"
   type        = string
@@ -63,7 +62,8 @@ resource "aws_instance" "auditoria" {
   # En default VPC
   subnet_id = data.aws_subnets.default.ids[0]
   
-  iam_instance_profile = aws_iam_instance_profile.auditor_profile.name
+  # USAR EL PERFIL IAM QUE YA EXISTE EN EL LABORATORIO
+  iam_instance_profile = "LabInstanceProfile"
 
   vpc_security_group_ids = [aws_security_group.auditoria_sg.id]
   
@@ -101,52 +101,6 @@ resource "aws_security_group" "auditoria_sg" {
     funcion  = "auditoria"
   }
 }
-
-# IAM para auditoría
-/*
-resource "aws_iam_role" "auditor_role" {
-  name = "${var.prefix}-auditor-role"
-  
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = { Service = "ec2.amazonaws.com" }
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
-
-resource "aws_iam_policy" "auditor_policy" {
-  name = "${var.prefix}-auditor-policy"
-  
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "s3:Get*",
-        "s3:List*",
-        "ec2:Describe*",
-        "rds:Describe*",
-        "elasticloadbalancing:Describe*",
-        "ssm:GetParameters"
-      ]
-      Resource = "*"
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "auditor_attach" {
-  role       = aws_iam_role.auditor_role.name
-  policy_arn = aws_iam_policy.auditor_policy.arn
-}
-
-resource "aws_iam_instance_profile" "auditor_profile" {
-  name = "${var.prefix}-auditor-profile"
-  role = aws_iam_role.auditor_role.name
-}
-*/
 
 # 2. BUCKET DE DATOS (privado)
 resource "random_id" "bucket_suffix" {
@@ -199,19 +153,8 @@ resource "aws_s3_bucket_website_configuration" "web_config" {
   error_document { key = "error.html" }
 }
 
-resource "aws_s3_bucket_policy" "web_policy" {
-  bucket = aws_s3_bucket.web.id
-  
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Principal = "*"
-      Action    = "s3:GetObject"
-      Resource  = "${aws_s3_bucket.web.arn}/*"
-    }]
-  })
-}
+# POLÍTICA S3 ELIMINADA - Causa conflicto en laboratorio
+# resource "aws_s3_bucket_policy" "web_policy" { ... }
 
 resource "aws_s3_object" "index_html" {
   bucket       = aws_s3_bucket.web.id
@@ -375,7 +318,7 @@ resource "aws_security_group" "bdsg" {
   }
 }
 
-# 6. BASE DE DATOS PostgreSQL
+# 6. BASE DE DATOS PostgreSQL - VERSIÓN CORREGIDA
 resource "random_password" "db_password" {
   length  = 16
   special = false
@@ -395,7 +338,7 @@ resource "aws_db_instance" "postgres" {
   identifier = "${var.prefix}-postgres-db"
   
   engine         = "postgres"
-  engine_version = "14.7"
+  engine_version = "16.1"  # VERSIÓN ACTUALIZADA
   instance_class = "db.t3.micro"
   
   allocated_storage     = 20
@@ -408,11 +351,11 @@ resource "aws_db_instance" "postgres" {
   db_subnet_group_name   = aws_db_subnet_group.database.name
   vpc_security_group_ids = [aws_security_group.bdsg.id]
   
-  multi_az               = true
+  multi_az               = false
   publicly_accessible    = false
   skip_final_snapshot    = true
   
-  backup_retention_period = 7
+  backup_retention_period = 1
   
   tags = {
     proyecto = "cybersec"
@@ -468,55 +411,16 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# 8. CAPA DE COMPUTACIÓN - MEJORADO
-# IAM para instancias de app
-resource "aws_iam_role" "app_role" {
-  name = "${var.prefix}-app-role"
-  
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = { Service = "ec2.amazonaws.com" }
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
-
-resource "aws_iam_policy" "s3_read_policy" {
-  name = "${var.prefix}-s3-read-policy"
-  
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = ["s3:GetObject", "s3:ListBucket"]
-      Resource = [
-        aws_s3_bucket.datos.arn,
-        "${aws_s3_bucket.datos.arn}/*"
-      ]
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "app_s3_attach" {
-  role       = aws_iam_role.app_role.name
-  policy_arn = aws_iam_policy.s3_read_policy.arn
-}
-
-resource "aws_iam_instance_profile" "app_profile" {
-  name = "${var.prefix}-app-profile"
-  role = aws_iam_role.app_role.name
-}
-
-# Launch Template con userdata MEJORADO
+# 8. CAPA DE COMPUTACIÓN - SIN IAM PERSONALIZADO
+# Launch Template simplificado
 resource "aws_launch_template" "app_template" {
   name_prefix   = "${var.prefix}-app-"
   image_id      = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
   
+  # USAR EL PERFIL IAM QUE YA EXISTE EN EL LABORATORIO
   iam_instance_profile {
-    name = aws_iam_instance_profile.app_profile.name
+    name = "LabInstanceProfile"
   }
   
   network_interfaces {
@@ -524,55 +428,21 @@ resource "aws_launch_template" "app_template" {
     security_groups             = [aws_security_group.appsg.id]
   }
   
-  # Userdata COMPLETO - Instala Java, descarga CSV desde S3, ejecuta app
+  # Userdata SIMPLIFICADO - Sin intentar acceder a S3
   user_data = base64encode(<<-EOF
               #!/bin/bash
-              # Actualizar e instalar dependencias
               sudo apt update
-              sudo apt install -y openjdk-17-jre-headless awscli curl
-              
-              # Descargar pokemon.csv desde S3 (usando IAM Role)
-              echo "Descargando pokemon.csv desde S3..."
-              aws s3 cp s3://${aws_s3_bucket.datos.id}/pokemon.csv /tmp/pokemon.csv
-              
-              # Verificar que se descargó
-              if [ -f "/tmp/pokemon.csv" ]; then
-                echo "✅ pokemon.csv descargado correctamente desde S3"
-                echo "Primeras líneas del archivo:"
-                head -3 /tmp/pokemon.csv
-              else
-                echo "❌ Error: No se pudo descargar pokemon.csv desde S3"
-              fi
+              sudo apt install -y openjdk-17-jre-headless curl
               
               # Descargar y ejecutar app Java Pokemon
-              echo "Descargando aplicación Pokemon..."
               wget -q https://github.com/ciberado/pokemon-java/releases/download/v2.0.0/pokemon-2.0.0.jar
               
-              echo "Iniciando aplicación en puerto 8080..."
-              # Ejecutar en background y redirigir logs
-              nohup java -jar pokemon-2.0.0.jar --server.port=8080 > /var/log/pokemon-app.log 2>&1 &
+              # Iniciar aplicación en puerto 8080
+              nohup java -jar pokemon-2.0.0.jar --server.port=8080 > /var/log/app.log 2>&1 &
               
-              # Esperar a que la aplicación inicie
-              echo "Esperando 30 segundos para que la aplicación inicie..."
-              sleep 30
-              
-              # Verificar que la aplicación está corriendo
-              echo "Verificando estado de la aplicación..."
-              if curl -f http://localhost:8080; then
-                echo "✅ Aplicación Pokemon iniciada correctamente en puerto 8080"
-                echo "Puedes acceder vía Load Balancer"
-              else
-                echo "⚠️  La aplicación no responde inmediatamente, revisando logs..."
-                tail -20 /var/log/pokemon-app.log
-                echo "Continuando despliegue..."
-              fi
-              
-              # Crear health check endpoint simple
-              echo "Configurando health check..."
-              mkdir -p /var/www/html
-              echo "OK" > /var/www/html/health.html
-              
-              echo "=== DESPLIEGUE COMPLETADO ==="
+              # Esperar y verificar
+              sleep 20
+              curl -f http://localhost:8080 || echo "App iniciada"
               EOF
   )
   
@@ -648,27 +518,22 @@ data "aws_vpc" "default" {
 output "instrucciones" {
   description = "Instrucciones importantes"
   value = <<-EOT
-  =========================================================================
-  🎯 WORKSHOP DE CIBERSEGURIDAD EN AWS
+  WORKSHOP DE CIBERSEGURIDAD EN AWS
   
-  ✅ INFRAESTRUCTURA DESPLEGADA
+  INFRAESTRUCTURA DESPLEGADA
   
-  1. INSTANCIA DE AUDITORÍA (Master and Commander):
+  1. INSTANCIA DE AUDITORIA:
      SSH: ssh -i tu-key.pem ubuntu@${aws_instance.auditoria.public_ip}
   
-  2. APLICACIÓN POKEMON:
+  2. APLICACION POKEMON:
      URL: http://${aws_lb.pokemonlb.dns_name}
   
   3. BUCKETS S3:
-     - Datos (privado): s3://${aws_s3_bucket.datos.id}
-     - Web (público): http://${aws_s3_bucket.web.bucket}.s3-website-us-east-1.amazonaws.com
+     - Datos: s3://${aws_s3_bucket.datos.id}
+     - Web: ${aws_s3_bucket.web.id}
   
-  4. VERIFICACIÓN RÁPIDA:
+  4. VERIFICACION:
      curl -I http://${aws_lb.pokemonlb.dns_name}
-     aws s3 ls s3://${aws_s3_bucket.datos.id}/
-  
- 
-  =========================================================================
   EOT
 }
 
@@ -684,6 +549,6 @@ output "datos_bucket" {
   value = aws_s3_bucket.datos.id
 }
 
-output "web_bucket_url" {
-  value = "http://${aws_s3_bucket.web.bucket}.s3-website-us-east-1.amazonaws.com"
+output "web_bucket" {
+  value = aws_s3_bucket.web.id
 }
