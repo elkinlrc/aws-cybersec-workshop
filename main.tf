@@ -272,7 +272,7 @@ resource "aws_security_group" "albsg" {
 
 resource "aws_security_group" "appsg" {
   name        = "appsg"
-  description = "Security Group para instancias de aplicación"
+  description = "Security Group para instancias de aplicacion"
   vpc_id      = module.vpc.vpc_id
   
   ingress {
