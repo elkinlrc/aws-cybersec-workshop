@@ -24,3 +24,6 @@ terraform init
 terraform plan
 
 terraform plan -var environment=dev -var owner=$USER
+
+terraform apply -auto-approve -var environment=dev -var owner=$USER
+
