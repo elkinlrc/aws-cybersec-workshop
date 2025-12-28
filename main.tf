@@ -304,7 +304,7 @@ resource "aws_security_group" "bdsg" {
   vpc_id      = module.vpc.vpc_id
   
   ingress {
-    description     = "PostgreSQL desde instancias de aplicación"
+    description     = "PostgreSQL desde instancias de aplicacion"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
