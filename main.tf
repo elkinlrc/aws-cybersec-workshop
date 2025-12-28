@@ -77,7 +77,7 @@ resource "aws_instance" "auditoria" {
 # Security Group para auditoría
 resource "aws_security_group" "auditoria_sg" {
   name        = "${var.prefix}-auditoria-sg"
-  description = "Security Group para instancia de auditoría"
+  description = "Security Group para instancia de auditoria"
   vpc_id      = data.aws_vpc.default.id
   
   ingress {
