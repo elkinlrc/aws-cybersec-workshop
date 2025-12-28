@@ -667,11 +667,7 @@ output "instrucciones" {
      curl -I http://${aws_lb.pokemonlb.dns_name}
      aws s3 ls s3://${aws_s3_bucket.datos.id}/
   
-  5. MAÑANA (con script del profesor):
-     a. Conéctate a la instancia de auditoría
-     b. Sube el script del profesor
-     c. Ejecuta: sudo bash /ruta/del/script-del-profesor.sh
-  
+ 
   =========================================================================
   EOT
 }
