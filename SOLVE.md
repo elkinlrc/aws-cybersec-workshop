@@ -27,3 +27,12 @@ terraform plan -var environment=dev -var owner=$USER
 
 terraform apply -auto-approve -var environment=dev -var owner=$USER
 
+
+
+si se presentan errores de en la bd puede ser que la bd indicada no esta soportada en la version que colocas para revisar 
+las versiones disponibles 
+
+aws rds describe-db-engine-versions \
+  --engine postgres \
+  --engine-version 15 \
+  --query "DBEngineVersions[].EngineVersion"
