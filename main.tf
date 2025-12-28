@@ -345,7 +345,7 @@ resource "aws_db_instance" "postgres" {
   storage_encrypted     = true
   
   db_name  = "pokemondb"
-  username = "admin"
+  username = "picadmin"
   password = random_password.db_password.result
   
   db_subnet_group_name   = aws_db_subnet_group.database.name
