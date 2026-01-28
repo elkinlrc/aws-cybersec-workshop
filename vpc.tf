@@ -98,13 +98,7 @@ resource "aws_route_table" "strict_internal" {
   }
 }
 
-# Asociar las subnets de base de datos a la tabla de rutas estricta interna
-resource "aws_route_table_association" "database_strict_internal" {
-  count = length(module.vpc.database_subnets)
 
-  subnet_id      = module.vpc.database_subnets[count.index]
-  route_table_id = aws_route_table.strict_internal.id
-}
 
 # Output para verificar
 output "vpc_internal_subnets" {
