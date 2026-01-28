@@ -1,4 +1,4 @@
- 🗄️ Base de Datos - Protección de datos EN TIER INTERNO
+
 
 resource "random_password" "db_password" {
   length  = 16
