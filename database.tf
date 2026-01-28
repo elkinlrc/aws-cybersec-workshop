@@ -36,6 +36,7 @@ resource "aws_db_instance" "postgres" {
 
   publicly_accessible = false
   skip_final_snapshot = true
+  multi_az = true
 
   backup_retention_period = 1
 
