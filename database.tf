@@ -22,7 +22,7 @@ resource "aws_db_instance" "postgres" {
 
   engine         = "postgres"
   engine_version = "14.20"   # ✅ compatible con AWS Academy
-  instance_class = "db.t3.micro"
+  instance_class = "db.t3.small"
 
   allocated_storage = 20
   storage_encrypted = true
