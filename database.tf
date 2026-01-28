@@ -36,7 +36,7 @@ resource "aws_db_instance" "postgres" {
 
   publicly_accessible = false
   skip_final_snapshot = true
-  multi_az = true
+  multi_az = var.enable_multi_az
 
   backup_retention_period = 1
 

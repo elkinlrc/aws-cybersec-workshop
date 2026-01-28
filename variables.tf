@@ -13,4 +13,9 @@ variable "region" {
   default     = "us-east-1"
 }
 
+variable "enable_multi_az" {
+  description = "Habilitar Multi-AZ para alta disponibilidad"
+  default     = true  # Activado para cumplir requisitos del workshop
+}
+
 
