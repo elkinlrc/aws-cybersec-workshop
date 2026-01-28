@@ -42,6 +42,16 @@ resource "aws_s3_bucket" "web" {
  }
 }
 
+# Configuración de Block Public Access para bucket web
+resource "aws_s3_bucket_public_access_block" "web_block" {
+  bucket = aws_s3_bucket.web.id
+
+  block_public_acls       = true
+  block_public_policy     = false  # Permitir políticas públicas
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 # Configuración de sitio web estático
 resource "aws_s3_bucket_website_configuration" "web_config" {
   bucket = aws_s3_bucket.web.id
@@ -49,6 +59,8 @@ resource "aws_s3_bucket_website_configuration" "web_config" {
   index_document {
     suffix = "index.html"
   }
+
+  depends_on = [aws_s3_bucket_public_access_block.web_block]
 }
 
 # POLÍTICA DE BUCKET para acceso público (en lugar de ACL)
@@ -74,7 +86,8 @@ resource "aws_s3_bucket_policy" "web_policy" {
   })
 
   depends_on = [
-    aws_s3_bucket.web
+    aws_s3_bucket.web,
+    aws_s3_bucket_public_access_block.web_block
   ]
 }
 
