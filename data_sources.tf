@@ -18,3 +18,6 @@ data "aws_subnets" "default" {
 data "aws_vpc" "default" {
   default = true
 }
+
+# Data source para obtener la región actual
+data "aws_region" "current" {}
