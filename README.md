@@ -255,3 +255,4 @@ Crea un bucket para contenido web con estas **características de seguridad**:
 - ✅ Disponibilidad con seguridad
 - ✅ Trazabilidad mediante etiquetado
 
+solo falta un error
